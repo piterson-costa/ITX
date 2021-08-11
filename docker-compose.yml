@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+    app:
+        container_name: app
+        restart: always
+        build: .
+        volumes:
+            - ./:/var/www/
+            - ./vendor:/var/www/vendor
+        depends_on:
+            - mysql
+        networks:
+            - support-network
+
+    mysql:
+        container_name: mysql
+        image: mysql:5.7.22
+        ports:
+            - "3306:3306"
+        # volumes:
+        #   - .docker/mysql/dbdata:/var/lib/mysql
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_USER: ${DB_USERNAME}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+        command:
+            'mysqld --innodb-flush-method=fsync'
+        networks:
+            - support-network
+
+    nginx:
+        container_name: nginx
+        build: .docker/nginx
+        restart: always
+        ports:
+            - "8000:80"
+        volumes:
+            - ./:/var/www
+        depends_on:
+            - app
+        networks:
+            - support-network
+
+networks:
+    support-network:
+        driver: bridge
